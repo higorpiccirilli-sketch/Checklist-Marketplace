@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist de Preparação de Envios</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* slate-900 */
+            color: #cbd5e1; /* slate-300 */
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .card {
+            background-color: #1e293b; /* slate-800 */
+            border: 1px solid #334155; /* slate-700 */
+            transition: all 0.2s ease-in-out;
+        }
+        .card:hover {
+            border-color: #475569; /* slate-600 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Se todos os checks marcados */
+        .card.completed {
+            border-color: #059669; /* emerald-600 */
+            background-color: rgba(6, 78, 59, 0.2); /* emerald-900 com opacidade */
+        }
+        .card.completed h3 {
+            color: #34d399; /* emerald-400 */
+        }
+
+        /* Checkbox Customizado */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #334155;
+            margin: 0;
+            font: inherit;
+            color: currentColor;
+            width: 1.25em;
+            height: 1.25em;
+            border: 1px solid #475569;
+            border-radius: 0.25em;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .custom-checkbox::before {
+            content: "";
+            width: 0.65em;
+            height: 0.65em;
+            transform: scale(0);
+            transition: 120ms transform ease-in-out;
+            box-shadow: inset 1em 1em white; /* Checkmark branca */
+            transform-origin: center;
+            clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+        }
+        .custom-checkbox:checked {
+            background-color: #0284c7; /* sky-600 */
+            border-color: #0284c7;
+        }
+        .custom-checkbox:checked::before {
+            transform: scale(1);
+        }
+
+        .checklist-row {
+            transition: opacity 0.2s;
+        }
+        .checklist-row.checked {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        /* Inputs numéricos sem setas */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <div class="flex-grow w-full max-w-7xl mx-auto p-4 sm:p-6">
+        
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 border-b border-slate-700 pb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-100">Painel de Preparação de Envios</h1>
+                <p class="text-slate-400 mt-1">Controle de impressão e disponibilização para expedição.</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-right">
+                <p class="text-xs text-slate-500 uppercase tracking-wide font-semibold">Data de Hoje</p>
+                <p class="text-xl text-sky-400 font-mono" id="current-date">--/--/----</p>
+            </div>
+        </header>
+
+        <div id="channels-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+
+    </div>
+
+    <footer class="bg-slate-800 border-t border-slate-700 p-4 sticky bottom-0 z-10 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            
+            <div class="flex items-center space-x-6">
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-bold">Total de Volumes</span>
+                    <div class="text-2xl font-bold text-slate-100" id="total-qty">0</div>
+                </div>
+                <div class="h-8 w-px bg-slate-600"></div>
+                <div>
+                    <span class="text-xs text-slate-500 uppercase font-bold">Progresso</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg font-bold text-sky-400" id="progress-percent">0%</span>
+                        <div class="w-24 bg-slate-700 rounded-full h-2">
+                            <div id="progress-bar" class="bg-sky-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="copiarResumo()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm font-semibold transition border border-slate-600">
+                    Copiar Resumo
+                </button>
+                <button onclick="resetAll()" class="px-4 py-2 bg-rose-900/40 hover:bg-rose-900/60 text-rose-200 border border-rose-900/50 rounded-lg text-sm font-semibold transition">
+                    Reiniciar Tudo
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // --- CONFIGURAÇÃO ---
+        const channels = [
+            { id: 'shopee', name: 'Shopee', color: 'text-orange-500' },
+            { id: 'amazon', name: 'Amazon', color: 'text-yellow-500' },
+            { id: 'nuvem', name: 'Nuvemshop', color: 'text-indigo-400' },
+            { id: 'tiktok', name: 'TikTok', color: 'text-pink-500' },
+            { id: 'ml', name: 'Mercado Livre', color: 'text-yellow-400' },
+            { id: 'outros', name: 'Manuais / Outros', color: 'text-emerald-400', isManual: true }
+        ];
+
+        const checklistItems = [
+            'Relatório de Separação',
+            'Envios Preparados',
+            'Colocado no Escaninho'
+        ];
+
+        const LS_KEY = 'checklist_preparo_envios_v1';
+
+        // --- ESTADO ---
+        let appState = {};
+
+        // --- INICIALIZAÇÃO ---
+        function init() {
+            // Data
+            const now = new Date();
+            document.getElementById('current-date').textContent = now.toLocaleDateString('pt-BR');
+
+            // Carregar ou Criar Estado
+            const saved = localStorage.getItem(LS_KEY);
+            if (saved) {
+                appState = JSON.parse(saved);
+            } else {
+                channels.forEach(ch => {
+                    appState[ch.id] = {
+                        qty: '',
+                        checks: [false, false, false]
+                    };
+                });
+            }
+
+            renderGrid();
+            updateTotals();
+        }
+
+        // --- RENDERIZAÇÃO ---
+        function renderGrid() {
+            const grid = document.getElementById('channels-grid');
+            grid.innerHTML = '';
+
+            channels.forEach(ch => {
+                const data = appState[ch.id] || { qty: '', checks: [false, false, false] };
+                const isComplete = data.checks.every(Boolean) && data.qty !== '' && parseInt(data.qty) > 0;
+
+                const card = document.createElement('div');
+                card.className = `card rounded-xl p-5 ${isComplete ? 'completed' : ''}`;
+                
+                // Header do Card
+                let html = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-bold text-lg ${isComplete ? '' : 'text-slate-100'} flex items-center gap-2">
+                            <span class="${ch.color}">●</span> ${ch.name}
+                        </h3>
+                        <div class="flex flex-col items-end">
+                             <label class="text-[10px] text-slate-500 uppercase font-bold mb-1">Qtd Volumes</label>
+                             <input type="number" min="0" 
+                                class="w-20 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-right text-slate-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 transition"
+                                value="${data.qty}" 
+                                onchange="updateQty('${ch.id}', this.value)"
+                                placeholder="0">
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                `;
+
+                // Checklist Items
+                checklistItems.forEach((itemText, index) => {
+                    const isChecked = data.checks[index];
+                    const inputId = `${ch.id}-check-${index}`;
+                    
+                    html += `
+                        <div class="checklist-row flex items-center p-2 rounded hover:bg-slate-700/50 transition ${isChecked ? 'checked' : ''}">
+                            <input type="checkbox" id="${inputId}" class="custom-checkbox" 
+                                ${isChecked ? 'checked' : ''} 
+                                onchange="toggleCheck('${ch.id}', ${index})">
+                            <label for="${inputId}" class="ml-3 text-sm font-medium text-slate-300 cursor-pointer select-none flex-1">
+                                ${itemText}
+                            </label>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                card.innerHTML = html;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- LÓGICA ---
+        function updateQty(channelId, value) {
+            if (!appState[channelId]) return;
+            appState[channelId].qty = value;
+            saveAndRender();
+        }
+
+        function toggleCheck(channelId, index) {
+            if (!appState[channelId]) return;
+            appState[channelId].checks[index] = !appState[channelId].checks[index];
+            saveAndRender();
+        }
+
+        function saveAndRender() {
+            localStorage.setItem(LS_KEY, JSON.stringify(appState));
+            renderGrid();
+            updateTotals();
+        }
+
+        function updateTotals() {
+            let totalQty = 0;
+            let totalChecks = 0;
+            let totalPossibleChecks = channels.length * checklistItems.length;
+
+            channels.forEach(ch => {
+                const data = appState[ch.id];
+                if (data.qty) totalQty += parseInt(data.qty);
+                totalChecks += data.checks.filter(Boolean).length;
+            });
+
+            // Update UI
+            document.getElementById('total-qty').textContent = totalQty;
+            
+            const percent = Math.round((totalChecks / totalPossibleChecks) * 100);
+            document.getElementById('progress-percent').textContent = `${percent}%`;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+            
+            // Mudar cor da barra se 100%
+            const bar = document.getElementById('progress-bar');
+            if (percent === 100) {
+                bar.classList.remove('bg-sky-500');
+                bar.classList.add('bg-emerald-500');
+            } else {
+                bar.classList.add('bg-sky-500');
+                bar.classList.remove('bg-emerald-500');
+            }
+        }
+
+        function resetAll() {
+            if(confirm('Tem certeza que deseja zerar todo o painel de hoje?')) {
+                channels.forEach(ch => {
+                    appState[ch.id] = { qty: '', checks: [false, false, false] };
+                });
+                saveAndRender();
+            }
+        }
+
+        function copiarResumo() {
+            let lines = [];
+            let totalGeral = 0;
+
+            channels.forEach(ch => {
+                const data = appState[ch.id];
+                const qty = parseInt(data.qty) || 0;
+                if (qty > 0) {
+                    const status = data.checks[2] ? '✅ No Escaninho' : '⚠️ Pendente';
+                    lines.push(`${ch.name}: ${qty} vols - ${status}`);
+                    totalGeral += qty;
+                }
+            });
+
+            if (lines.length === 0) {
+                alert('Nenhum pedido lançado para gerar resumo.');
+                return;
+            }
+
+            const text = `*Resumo Preparação de Envios ${new Date().toLocaleDateString('pt-BR')}*\n\n` + 
+                         lines.join('\n') + 
+                         `\n\n*Total Geral: ${totalGeral} volumes*`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Resumo copiado para a área de transferência!');
+            }).catch(err => {
+                console.error('Erro ao copiar', err);
+            });
+        }
+
+        // Start
+        document.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
